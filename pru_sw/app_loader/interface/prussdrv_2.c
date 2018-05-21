@@ -94,11 +94,13 @@ int __prussdrv_memmap_init(void) {
   } else
     return -1;
 
+  printf("OK line 101\n");
   prussdrv.pru0_dataram_base =
       mmap(0, prussdrv.pruss_map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
            prussdrv.mmap_fd, PRUSS_UIO_MAP_OFFSET_PRUSS);
+  printf("OK line 106\n");
   prussdrv.version = __pruss_detect_hw_version(prussdrv.pru0_dataram_base);
-
+  printf("OK line 107\n");
   switch (prussdrv.version) {
   case PRUSS_V1: {
     DEBUG_PRINTF(PRUSS_V1_STR "\n");
@@ -202,7 +204,10 @@ int __prussdrv_memmap_init(void) {
       mmap(0, prussdrv.l3ram_map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
            prussdrv.mmap_fd, PRUSS_UIO_MAP_OFFSET_L3RAM);
 #endif
+#define PRUSS_UIO_DRV_EXTRAM_BASE "/sys/class/uio/uio0/maps/map0/addr"
+#define PRUSS_UIO_DRV_EXTRAM_SIZE "/sys/class/uio/uio0/maps/map0/size"
 
+  printf("OK line 224\n");
   fd = open(PRUSS_UIO_DRV_EXTRAM_BASE, O_RDONLY);
   if (fd >= 0) {
     read(fd, hexstring, PRUSS_UIO_PARAM_VAL_LEN);
@@ -223,6 +228,7 @@ int __prussdrv_memmap_init(void) {
       mmap(0, prussdrv.extram_map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
            prussdrv.mmap_fd, PRUSS_UIO_MAP_OFFSET_EXTRAM);
 
+  printf("OK line 250\n");
   return 0;
 }
 
@@ -338,9 +344,10 @@ int prussdrv_pruintc_init(const tpruss_intc_initdata *prussintc_init_data) {
   volatile unsigned int *pruintc_io =
       (volatile unsigned int *)prussdrv.intc_base;
   unsigned int i, mask1, mask2;
-
+  printf("line384 ok\n");
   pruintc_io[PRU_INTC_SIPR1_REG >> 2] = 0xFFFFFFFF;
   pruintc_io[PRU_INTC_SIPR2_REG >> 2] = 0xFFFFFFFF;
+  printf("line387 ok\n");
 
   for (i = 0; i<(NUM_PRU_SYS_EVTS + 3)>> 2; i++)
     pruintc_io[(PRU_INTC_CMR1_REG >> 2) + i] = 0;
@@ -624,27 +631,27 @@ int prussdrv_exec_program_at(int prunum, const char *filename, size_t addr) {
   FILE *fPtr;
   unsigned char fileDataArray[PRUSS_MAX_IRAM_SIZE];
   int fileSize = 0;
-
+  printf("line 715\n");
   // Open an File from the hard drive
   fPtr = fopen(filename, "rb");
   if (fPtr == NULL) {
-    DEBUG_PRINTF("File %s open failed\n", filename);
+    printf("File %s open failed\n", filename);
     return -1;
   } else {
-    DEBUG_PRINTF("File %s open passed\n", filename);
+    printf("File %s open passed\n", filename);
   }
   // Read file size
   fseek(fPtr, 0, SEEK_END);
   fileSize = ftell(fPtr);
 
   if (fileSize == 0) {
-    DEBUG_PRINTF("File read failed.. Closing program\n");
+    printf("File read failed.. Closing program\n");
     fclose(fPtr);
     return -1;
   }
 
   if (fileSize > PRUSS_MAX_IRAM_SIZE) {
-    DEBUG_PRINTF("File too large.. Closing program\n");
+    printf("File too large.. Closing program\n");
     fclose(fPtr);
     return -1;
   }
@@ -652,13 +659,13 @@ int prussdrv_exec_program_at(int prunum, const char *filename, size_t addr) {
   fseek(fPtr, 0, SEEK_SET);
 
   if (fileSize != fread((unsigned char *)fileDataArray, 1, fileSize, fPtr)) {
-    DEBUG_PRINTF("WARNING: File Size mismatch\n");
+    printf("WARNING: File Size mismatch\n");
     fclose(fPtr);
     return -1;
   }
 
   fclose(fPtr);
-
+  printf("line750\n");
   return prussdrv_exec_code_at(prunum, (const unsigned int *)fileDataArray,
                                fileSize, addr);
 }
